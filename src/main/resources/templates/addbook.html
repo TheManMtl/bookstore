@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security5">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>myBookstore | Add Book</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+</head>
+
+<body class="bg-secondary">
+<!-- Header -->
+<nav class="navbar navbar-expand-lg navbar-light bg-dark p-3">
+    <a class="navbar-brand mx-4  text-white" th:href="@{/books}">myBookstore</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav">
+            <!--EHSAN-->
+            <li class="nav-item active">
+                <a class="nav-link  text-warning" sec:authorize="not hasAnyRole('ROLE_ADMIN', 'ROLE_EMPLOYEE')"
+                   th:href="@{/books}">All Books <span class="sr-only"></span></a>
+            </li>
+            <li class="nav-item active">
+                <a class="nav-link text-warning" sec:authorize="hasAnyRole('ROLE_ADMIN', 'ROLE_EMPLOYEE')"
+                   th:href="@{/books/all}">All Books <span class="sr-only"></span></a>
+            </li>
+
+            <li class="nav-item active" th:each="genreOpt : ${T(com.myBookstore.bookstore.entity.Genre).values()}">
+                <a class="nav-link text-light"
+                   sec:authorize="not hasAnyRole('ROLE_ADMIN', 'ROLE_EMPLOYEE')"
+                   th:value="${genreOpt}" th:text="${genreOpt.displayValue}"
+                   th:href="@{'/books/genre/' + ${genreOpt.name()}}">
+                </a>
+            </li>
+            <li class="nav-item active" th:each="genreOpt : ${T(com.myBookstore.bookstore.entity.Genre).values()}">
+                <a class="nav-link text-light"
+                   sec:authorize="hasAnyRole('ROLE_ADMIN', 'ROLE_EMPLOYEE')"
+                   th:value="${genreOpt}" th:text="${genreOpt.displayValue}"
+                   th:href="@{'/books/genre/all/' + ${genreOpt.name()}}">
+                </a>
+            </li>
+        </ul>
+
+        <ul class="navbar-nav ms-auto">
+            <p sec:authorize="hasRole('ROLE_CUSTOMER')">
+                <li class="nav-item">
+                    <a class="nav-link" href="#">myPurchases</a>
+                </li>
+            </p>
+            <p sec:authorize="hasRole('ROLE_EMPLOYEE')">
+                <li class="nav-item">
+                    <a class="btn btn-outline-info text-light mx-1" th:href="@{/requests}">Purchase Requests</a>
+                </li>
+
+                <li class="nav-item" sec:authorize="hasRole('ROLE_EMPLOYEE')">
+                    <a class="btn btn-outline-info text-light mx-3" th:href="@{/books/newAddPage}">Add Book</a>
+                </li>
+
+            </p>
+            <li class="nav-item" th:unless="${#authorization.expression('isAuthenticated()')}">
+                <a class="btn btn-outline-success mx-2" th:href="@{/showMyLoginPage}">Log In</a>
+            </li>
+
+            <li class="nav-item" th:unless="${#authorization.expression('isAuthenticated()')}">
+                <a class="btn btn-outline-warning mx-2" th:href="@{/showRegistration}">Register</a>
+            </li>
+            <li class="nav-item" sec:authorize="hasAnyRole('ROLE_EMPLOYEE', 'ROLE_ADMIN', 'ROLE_CUSTOMER')">
+                <form action="#" th:action="@{/logout}" method="post">
+                    <input type="submit" class="btn btn-outline-warning mx-2" value="Logout">
+                </form>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+<!-- container -->
+<div class="container mt-5">
+    <form action="#" th:action="@{/books/save}" method="POST" th:object="${theBook}"
+          class="form-horizontal bg-light pt-5 px-5 shadow-lg">
+        <div class="row">
+
+            <!-- LEFT -->
+            <div class="col-md-6">
+
+                <div class="row mb-2">
+                    <div class="col-md-2"><label class="text-dark" for="title">ISBN</label></div>
+                    <small class="text-danger" th:if="${#fields.hasErrors('isbn')}" th:errors="*{isbn}"></small>
+                    <div class="col-md-6"><input type="text" th:field="*{isbn}" class="form-control " id="isbn"
+                                                 name="isbn" placeholder="ISBN"></div>
+                </div>
+
+                <div class="row mb-2">
+                    <div class="col-md-2 "><label class="text-dark" for="title">Title</label></div>
+                    <small class="text-danger" th:if="${#fields.hasErrors('title')}" th:errors="*{title}">Title Error</small>
+                    <div class="col-md-6"><input type="text" th:field="*{title}" class="form-control" id="title"
+                                                 name="title"
+                                                 placeholder="Title"></div>
+                </div>
+
+
+                <div class="row mb-2 text-align-center">
+                    <div class="col-md-2"><label class="text-dark" for="description">Description</label></div>
+                    <small class="text-danger" th:if="${#fields.hasErrors('description')}" th:errors="*{description}">Description Error</small>
+                    <div class="col-md-6"><textarea class="form-control" th:field="*{description}" id="description"
+                                                    rows="6"
+                                                    name="description"
+                                                    placeholder="Description"></textarea></div>
+                </div>
+
+            </div>
+            <!-- RIGHT -->
+            <div class="col-md-6">
+                <div class="row mb-2">
+                    <div class="col-md-2 "><label class="text-dark" for="author">Author</label></div>
+                    <small class="text-danger" th:if="${#fields.hasErrors('author')}" th:errors="*{author}">Author Error</small>
+                    <div class="col-md-6"><input type="text" th:field="*{author}" class="form-control" id="author"
+                                                 name="author"
+                                                 placeholder="Author"></div>
+                </div>
+
+                <div class="row mb-2">
+                    <div class="col-md-2 "><label class="text-dark" for="publisher">Publisher</label></div>
+                    <small class="text-danger" th:if="${#fields.hasErrors('publisher')}" th:errors="*{publisher}">Publisher Error</small>
+                    <div class="col-md-6"><input type="text" th:field="*{publisher}" class="form-control" id="publisher"
+                                                 name="publisher"
+                                                 placeholder="Publisher"></div>
+                </div>
+
+                <div class="col-md-2"><label class="text-dark" for="description">Genre</label></div>
+                <small class="text-danger" th:if="${#fields.hasErrors('genre')}" th:errors="*{genre}">Genre Error</small>
+
+                <div class="col-md-6">
+                    <select class="form-select" aria-label="Genre Options" th:field="*{genre}">
+                        <option class="dropdown-item"
+                                th:each="genreOpt : ${T(com.myBookstore.bookstore.entity.Genre).values()}"
+                                th:value="${genreOpt}" th:text="${genreOpt.displayValue}"
+                        />
+                    </select></div>
+
+                <div class="row mb-2">
+                    <div class="col-md-2 "><label class="text-dark" for="price">Price:</label></div>
+                    <small class="text-danger" th:if="${#fields.hasErrors('price')}" th:errors="*{price}">Price Error</small>
+
+                    <div class="col-md-6"><input type="number" th:field="*{price}" class="form-control" id="price"
+                                                 name="price"
+                                                 placeholder="Price" step="0.01"></div>
+                </div>
+
+                <div class="row mb-2">
+                    <div class="col-md-2 "><label class="text-dark" for="inventory">Inventory:</label></div>
+                    <small class="text-danger" th:if="${#fields.hasErrors('inventory')}" th:errors="*{inventory}">Inventory Error</small>
+
+                    <div class="col-md-6"><input type="number" th:field="*{inventory}" class="form-control"
+                                                 id="inventory" name="inventory"
+                                                 placeholder="inventory"></div>
+                </div>
+
+
+                <div class="row mb-2">
+                    <div class="col-md-2"><label class="text-dark">Available</label></div>
+                    <small class="text-danger" th:if="${#fields.hasErrors('available')}" th:errors="*{available}">Availability Error</small>
+
+                    <div class="col-md-6">
+                        <div class="form-check">
+                            <input class="form-check-input" th:field="*{available}" type="radio" name="available"
+                                   id="yes"
+                                   value="yes"
+                                   checked>
+                            <label class="form-check-label text-dark" for="yes">
+                                Yes
+                            </label>
+                        </div>
+                        <div class="form-check pb-3">
+                            <input class="form-check-input" type="radio" name="available" id="no" value="no">
+                            <label class="form-check-label text-dark" for="no">
+                                No
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+
+                </div>
+                <div class="col-md-6">
+                    <button type="submit" class="btn btn-success mt-2 mb-5 btn-lg shadow-lg">Add New Book</button>
+                </div>
+            </div>
+
+
+        </div>
+    </form>
+    <a class="btn btn-danger mt-2 mb-5 btn-lg shadow-lg" th:href="@{/books/all}">X</a>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.12.9/dist/umd/popper.min.js"></script>
+
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+        integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+        crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/js/bootstrap.min.js"
+        integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+        crossorigin="anonymous"></script>
+</body>
+
+</html>

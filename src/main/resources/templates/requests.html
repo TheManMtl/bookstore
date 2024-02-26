@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security5">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Requests</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-light bg-dark p-3">
+    <a class="navbar-brand mx-4  text-white" th:href="@{/books}">myBookstore</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav">
+            <li class="nav-item active">
+                <a class="nav-link  text-warning" th:href="@{/requests}">All Requests <span class="sr-only"></span></a>
+            </li>
+            <li class="nav-item active">
+                <a class="nav-link text-light" th:href="@{/requests/status/REQUEST}">Requested<span
+                        class="sr-only"></span></a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-light" th:href="@{/requests/status/FULFILLED}">Fulfilled</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-light" th:href="@{/requests/status/CANCELLED}">Cancelled</a>
+            </li>
+        </ul>
+
+        <ul class="navbar-nav ms-auto">
+            <!--            <p sec:authorize="hasRole('ROLE_CUSTOMER')">-->
+            <!--                <li class="nav-item">-->
+            <!--                    <a class="nav-link" href="#">myPurchases</a>-->
+            <!--                </li>-->
+            <!--            </p>-->
+            <p sec:authorize="hasRole('ROLE_EMPLOYEE')">
+                <li class="nav-item">
+                    <a class="btn btn-outline-info text-light mx-1" th:href="@{/requests}">Purchase Requests</a>
+                </li>
+
+                <li class="nav-item" sec:authorize="hasRole('ROLE_EMPLOYEE')">
+                    <a class="btn btn-outline-info text-light mx-3" th:href="@{/books/newAddPage}">Add Book</a>
+                </li>
+
+            </p>
+            <li class="nav-item" th:unless="${#authorization.expression('isAuthenticated()')}">
+                <a class="btn btn-outline-success mx-2" th:href="@{/showMyLoginPage}">Log In</a>
+            </li>
+
+            <li class="nav-item" th:unless="${#authorization.expression('isAuthenticated()')}">
+                <a class="btn btn-outline-warning mx-2" th:href="@{/showRegistration}">Register</a>
+            </li>
+            <li class="nav-item" sec:authorize="hasAnyRole('ROLE_EMPLOYEE', 'ROLE_ADMIN', 'ROLE_CUSTOMER')">
+                <form action="#" th:action="@{/logout}" method="post">
+                    <input type="submit" class="btn btn-outline-warning mx-2" value="Logout">
+                </form>
+            </li>
+        </ul>
+    </div>
+</nav>
+<div class="container-fluid">
+    <table class="table table-sm table-hover mt-5 table-striped table-info">
+        <thead>
+        <tr>
+            <th scope="col">ID</th>
+            <th scope="col">Book</th>
+            <th scope="col">Customer</th>
+            <th scope="col">Employee</th>
+            <th scope="col">Requested Date</th>
+            <th scope="col">Updated Date</th>
+            <th scope="col">Status</th>
+            <th scope="col">Book Title</th>
+            <th scope="col">Book Author</th>
+            <th scope="col">Book Price</th>
+            <th scope="col">Book Inventory</th>
+            <th scope="col">Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="theRequest : ${requests}">
+            <td th:text="${theRequest.id}"/>
+            <td th:text="${theRequest.bookId}"/>
+            <td th:text="${theRequest.customerId}"/>
+            <td th:text="${theRequest.employeeId}"/>
+            <td th:text="${#dates.format(theRequest.requestDate,'yyyy-MM-dd')}"/>
+            <td th:text="${#dates.format(theRequest.updateDate,'yyyy-MM-dd')}"/>
+            <td th:text="${theRequest.status}"/>
+            <td th:text="${theRequest.bookTitle}"/>
+            <td th:text="${theRequest.bookAuthor}"/>
+            <td th:text="${theRequest.bookPrice}"/>
+            <td th:text="${theRequest.bookInventory}"/>
+            <td>
+                <div class="row">
+                    <div class="col-md-3">
+                        <form sec:authorize="hasAnyRole('ROLE_ADMIN', 'ROLE_EMPLOYEE', 'ROLE_CUSTOMER')"
+                              th:action="@{/requests/cancel}" th:object="${theRequest}" method="post">
+                            <input type="number" class="form-control" name="id" th:value="${theRequest.id}" hidden="hidden">
+                            <input type="text" class="form-control" name="employeeId"
+                                   th:value="${#authentication.principal.username}" hidden="hidden">
+                            <button type="submit" class="btn btn-danger text-light p-1 shadow-lg">Cancel</button>
+                        </form>
+                    </div>
+                    <div class="col-md-6">
+                        <form sec:authorize="hasAnyRole('ROLE_ADMIN', 'ROLE_EMPLOYEE')" th:action="@{/requests/approve}"
+                              th:object="${theRequest}" method="post">
+                            <input type="number" class="form-control" name="id" th:value="${theRequest.id}" hidden="hidden">
+                            <input type="text" class="form-control" name="employeeId"
+                                   th:value="${#authentication.principal.username}" hidden="hidden">
+                            <button type="submit" class="btn btn-success shadow-lg  mx-2 p-1">Approve</button>
+                        </form>
+                    </div>
+
+                </div>
+            </td>
+        </tr>
+
+        </tbody>
+    </table>
+</div>
+<!-- DETAILS MODAL -->
+<div class="modal fade" id="bookDetails" tabindex="-1" role="dialog" aria-labelledby="title_id"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="title_id"><span class="h1">Crime and Punishment</span><br><span
+                        class="h5">By: Fyodor Dostoyevsky</span></h5>
+
+            </div>
+            <div class="modal-body">
+
+                <p>Raskolnikov, a destitute and desperate former student, wanders through the slums of St Petersburg
+                    and commits a random murder without remorse or regret. He imagines himself to be a great man, a
+                    Napoleon: acting for a higher purpose beyond conventional moral law. But as he embarks on a
+                    dangerous game of cat and mouse with a suspicious police investigator, Raskolnikov is pursued by
+                    the growing voice of his conscience and finds the noose of his own guilt tightening around his
+                    neck. Only Sonya, a downtrodden sex worker, can offer the chance of redemption.</p>
+                <hr>
+                <p>Price: $19.99</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary">Purchase</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- UPDATE MODAL -->
+<div class="modal fade" id="updateBook" tabindex="-1" role="dialog" aria-labelledby="updateId"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="updateId">
+
+
+                    Update
+                </h5>
+
+            </div>
+            <div class="modal-body">
+
+                <form>
+                    <div class="form-group">
+                        <label for="id">Book Id:</label>
+                        <input type="number" class="form-control" id="id" placeholder="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="isbn">Book Id:</label>
+                        <input type="text" class="form-control" id="isbn" placeholder="978-0143058144">
+                    </div>
+                    <div class="form-group">
+                        <label for="title">Title</label>
+                        <input type="text" class="form-control" id="title" placeholder="Crime and Punishment">
+                    </div>
+                    <div class="form-group">
+                        <label for="publisher">Publisher</label>
+                        <input type="text" class="form-control" id="publisher" placeholder="Penguin Classics">
+                    </div>
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <textarea class="form-control" id="description"
+                                  rows="6">Raskolnikov, a destitute and desperate former student, wanders through the slums of St Petersburg and commits a random murder without remorse or regret. He imagines himself to be a great man, a Napoleon: acting for a higher purpose beyond conventional moral law. But as he embarks on a dangerous game of cat and mouse with a suspicious police investigator, Raskolnikov is pursued by the growing voice of his conscience and finds the noose of his own guilt tightening around his neck. Only Sonya, a downtrodden sex worker, can offer the chance of redemption.</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="price">Price:</label>
+                        <input type="number" class="form-control" id="price" placeholder="19.99">
+                    </div>
+                    <div class="form-group">
+                        <label for="inventory">Inventory:</label>
+                        <input type="number" class="form-control" id="inventory" placeholder="25">
+                    </div>
+                    <div class="form-group">
+                        <label>Available</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="available" id="yes" value="yes"
+                                   checked>
+                            <label class="form-check-label" for="yes">
+                                Yes
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="available" id="no" value="no">
+                            <label class="form-check-label" for="no">
+                                No
+                            </label>
+                        </div>
+                    </div>
+
+
+                    <button type="submit" class="btn btn-primary mt-5">Submit</button>
+                </form>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+        integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+        crossorigin="anonymous"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/js/bootstrap.min.js"
+        integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+        crossorigin="anonymous"></script>
+</body>
+
+</html>

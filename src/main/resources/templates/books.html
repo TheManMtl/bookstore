@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security5">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>myBookstore</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+
+
+</head>
+
+<body class="bg-light">
+
+<nav class="navbar navbar-expand-lg navbar-light bg-dark p-3">
+    <a class="navbar-brand mx-4  text-white" th:href="@{/books}">myBookstore</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav">
+
+            <!--EHSAN-->
+
+            <li class="nav-item active">
+                <a class="nav-link  text-warning" sec:authorize="not hasAnyRole('ROLE_ADMIN', 'ROLE_EMPLOYEE')"
+                   th:href="@{/books}">All Books <span class="sr-only"></span></a>
+            </li>
+            <li class="nav-item active">
+                <a class="nav-link text-warning" sec:authorize="hasAnyRole('ROLE_ADMIN', 'ROLE_EMPLOYEE')"
+                   th:href="@{/books/all}">All Books <span class="sr-only"></span></a>
+            </li>
+
+            <li class="nav-item active" th:each="genreOpt : ${T(com.myBookstore.bookstore.entity.Genre).values()}">
+                <a class="nav-link text-light"
+                   sec:authorize="not hasAnyRole('ROLE_ADMIN', 'ROLE_EMPLOYEE')"
+                   th:value="${genreOpt}" th:text="${genreOpt.displayValue}"
+                   th:href="@{'/books/genre/' + ${genreOpt.name()}}">
+                </a>
+            </li>
+            <li class="nav-item active" th:each="genreOpt : ${T(com.myBookstore.bookstore.entity.Genre).values()}">
+                <a class="nav-link text-light"
+                   sec:authorize="hasAnyRole('ROLE_ADMIN', 'ROLE_EMPLOYEE')"
+                   th:value="${genreOpt}" th:text="${genreOpt.displayValue}"
+                   th:href="@{'/books/genre/all/' + ${genreOpt.name()}}">
+                </a>
+            </li>
+        </ul>
+
+        <ul class="navbar-nav ms-auto">
+<!--            <p sec:authorize="hasRole('ROLE_CUSTOMER')">-->
+<!--                <li class="nav-item">-->
+<!--                    <a class="nav-link" href="#">myPurchases</a>-->
+<!--                </li>-->
+<!--            </p>-->
+            <p sec:authorize="hasRole('ROLE_EMPLOYEE')">
+                <li class="nav-item">
+                    <a class="btn btn-outline-info text-light mx-1" th:href="@{/requests}">Purchase Requests</a>
+                </li>
+
+                <li class="nav-item" sec:authorize="hasRole('ROLE_EMPLOYEE')">
+                    <a class="btn btn-outline-info text-light mx-3" th:href="@{/books/newAddPage}">Add Book</a>
+                </li>
+
+            </p>
+            <li class="nav-item" th:unless="${#authorization.expression('isAuthenticated()')}">
+                <a class="btn btn-outline-success mx-2" th:href="@{/showMyLoginPage}">Log In</a>
+            </li>
+
+            <li class="nav-item" th:unless="${#authorization.expression('isAuthenticated()')}">
+                <a class="btn btn-outline-warning mx-2" th:href="@{/showRegistration}">Register</a>
+            </li>
+            <li class="nav-item" sec:authorize="hasAnyRole('ROLE_EMPLOYEE', 'ROLE_ADMIN', 'ROLE_CUSTOMER')">
+                <form action="#" th:action="@{/logout}" method="post">
+                    <input type="submit" class="btn btn-outline-warning mx-2" value="Logout">
+                </form>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+
+<div class="container-fluid">
+    <table class="table table-sm table-hover mt-5 table-striped table-info">
+        <thead>
+        <tr>
+            <th sec:authorize="hasRole('ROLE_ADMIN')" scope="col">ID</th>
+            <th sec:authorize="hasAnyRole('ROLE_EMPLOYEE', 'ROLE_ADMIN')" scope="col">ISBN</th>
+            <th scope="col">Title</th>
+            <th scope="col">Author</th>
+            <th scope="col">Genre</th>
+            <th sec:authorize="hasAnyRole('ROLE_EMPLOYEE', 'ROLE_ADMIN')" scope="col">Inventory</th>
+            <th sec:authorize="hasAnyRole('ROLE_EMPLOYEE', 'ROLE_ADMIN')" scope="col">Add</th>
+            <th sec:authorize="hasAnyRole('ROLE_EMPLOYEE', 'ROLE_ADMIN')" scope="col">Available</th>
+            <th scope="col">Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="theBook, rowStatus : ${books}">
+            <td sec:authorize="hasRole('ROLE_ADMIN')" th:text="${theBook.id}"/>
+            <td sec:authorize="hasAnyRole('ROLE_EMPLOYEE', 'ROLE_ADMIN')" th:text="${theBook.isbn}"/>
+            <td th:text="${theBook.title}"/>
+            <td th:text="${theBook.author}"/>
+            <td th:text="${theBook.genre.displayValue}"/>
+            <td sec:authorize="hasAnyRole('ROLE_EMPLOYEE', 'ROLE_ADMIN')" th:text="${theBook.inventory}"/>
+            <td sec:authorize="hasAnyRole('ROLE_EMPLOYEE', 'ROLE_ADMIN')">
+                <button type="button" class="btn btn-outline-danger shadow-lg"
+                        data-toggle="modal" th:attr="data-target='#addInventory' + ${rowStatus.index}">
+                    Add inventory
+                </button>
+
+            </td>
+            <td sec:authorize="hasAnyRole('ROLE_EMPLOYEE', 'ROLE_ADMIN')" th:text="${theBook.available}"/>
+            <td>
+                <a href="#" data-toggle="modal" th:attr="data-target='#bookDetails' + ${rowStatus.index}"
+                   class="btn btn-dark text-light p-1 shadow-lg">Book Details</a>
+                <a sec:authorize="hasAnyRole('ROLE_EMPLOYEE', 'ROLE_ADMIN')" href="#" data-toggle="modal"
+                   th:attr="data-target='#updateBook' + ${rowStatus.index}"
+                   class="btn btn-outline-dark shadow-lg  mx-2 p-1">Update</a>
+            </td>
+
+            <!-- Add Inventory modal -->
+            <div class="modal fade" th:attr="id='addInventory' + ${rowStatus.index}" tabindex="-1" role="dialog"
+                 aria-labelledby="addInventory" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="addInventory_title">Modal title</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+
+
+                            <form th:action="@{/books/inventory-update}" th:object="${theBook}" method="POST">
+                                <div class="form-group">
+                                    <input type="hidden" name="id" th:value="${theBook.id}">
+
+                                </div>
+                                <div class="form-group">
+                                    <label>Inventory to Add</label>
+                                    <input type="number" class="form-control" name="inventory">
+                                </div>
+                                <button type="submit" class="btn btn-primary mt-5">Submit</button>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DETAILS MODAL -->
+            <div class="modal fade" th:attr="id='bookDetails' + ${rowStatus.index}" tabindex="-1" role="dialog"
+                 aria-labelledby="exampleModalLabel"
+                 aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="exampleModalLabel"><span th:text="${theBook.title}"
+                                                                                 class="h1"></span><br><span
+                                    class="h5">By: <span th:text="${theBook.author}"></span></span>
+                            </h5>
+                        </div>
+                        <div class="modal-body">
+
+                            <p><span th:text="${theBook.description}"></span></p>
+                            <hr>
+                            <p>Price: $<span th:text="${theBook.price}"></span></p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+
+                            <form sec:authorize="hasRole('ROLE_CUSTOMER')" th:action="@{/requests/new}"
+                                  th:object="${theRequest}" method="POST">
+                                <input type="number" class="form-control" name="bookId" th:value="${theBook.id}"
+                                       hidden="hidden">
+                                <input type="text" class="form-control" name="customerId"
+                                       th:value="${#authentication.principal.username}" hidden="hidden">
+                                <button type="submit" class="btn btn-primary" sec:authorize="hasRole('ROLE_CUSTOMER')">
+                                    Purchase
+                                </button>
+
+                            </form>
+
+                            <li class="nav-item" th:unless="${#authorization.expression('isAuthenticated()')}">
+                                <a class="btn btn-info mx-1" th:href="@{/showMyLoginPage}">Log In to Purchase</a>
+                            </li>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- UPDATE MODAL -->
+            <div class="modal fade" th:attr="id='updateBook' + ${rowStatus.index}" tabindex="-1" role="dialog"
+                 aria-labelledby="updateModal"
+                 aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="updateModal">
+
+
+                                Update
+                            </h5>
+
+
+                        </div>
+                        <div class="modal-body">
+                            <form th:action="@{/books/update}" th:object="${theBook}" method="POST">
+                                <div class="form-group">
+
+                                    <input type="number" class="form-control" id="id" name="id" th:value="${theBook.id}"
+                                           hidden="hidden">
+                                </div>
+                                <div class="form-group">
+                                    <label for="isbn">ISBN:</label>
+                                    <input type="text" class="form-control" id="isbn" name="isbn"
+                                           th:value="${theBook.isbn}">
+                                </div>
+                                <div class="form-group">
+                                    <label for="title">Title</label>
+                                    <input type="text" class="form-control" id="title" name="title"
+                                           th:value="${theBook.title}">
+                                </div>
+                                <div class="form-group">
+                                    <label for="author">Author</label>
+                                    <input type="text" class="form-control" id="author" name="author"
+                                           th:value="${theBook.author}">
+                                </div>
+                                <div class="form-group">
+                                    <label for="publisher">Publisher</label>
+                                    <input type="text" class="form-control" id="publisher" name="publisher"
+                                           th:value="${theBook.publisher}">
+                                </div>
+                                <div class="form-group">
+                                    <label for="description">Description</label>
+                                    <textarea class="form-control" id="description" rows="6" name="description"
+                                              th:text="${theBook.description}"></textarea>
+
+
+                                    <label>Genre</label>
+                                    <div class="form-check"
+                                         th:each="genreOpt : ${T(com.myBookstore.bookstore.entity.Genre).values()}">
+                                        <input class="form-check-input" type="radio" th:id="${genreOpt}" name="genre"
+                                               th:name="genre" th:value="${genreOpt}"
+                                               th:checked="${genreOpt== theBook.genre}" th:text="${genreOpt.displayValue}">
+                                    </div>
+
+
+                                    <div class="form-group">
+                                        <label for="price">Price:</label>
+                                        <input type="number" class="form-control" name="price" id="price"
+                                               th:value="${theBook.price}">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="inventory">Inventory:</label>
+                                        <input type="number" class="form-control" id="inventory" name="inventory"
+                                               th:value="${theBook.inventory}">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Available</label>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="available" id="yes"
+                                                   value="yes"
+                                                   th:checked="${theBook.available == true}">
+                                            <label class="form-check-label" for="yes">
+                                                Yes
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="available" id="no" value="no"
+                                                   th:checked="${theBook.available == false}">
+                                            <label class="form-check-label" for="no">
+                                                No
+                                            </label>
+                                        </div>
+                                    </div>
+
+
+                                    <button type="submit" class="btn btn-primary mt-5">Submit</button>
+                                </div>
+                            </form>
+
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </tr>
+        </tbody>
+
+    </table>
+</div>
+
+
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+        integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+        crossorigin="anonymous"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/js/bootstrap.min.js"
+        integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+        crossorigin="anonymous"></script>
+</body>
+
+</html>
